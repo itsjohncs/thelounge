@@ -12,20 +12,25 @@ function listenForTwoFingerSwipes(onTwoFingerSwipe) {
 				return;
 			}
 
-			const now = window.performance.now();
-
-			if (history.length > 0 && history[history.length - 1].timestamp === now) {
-				// Touches with the same timestamps don't help us see the speed of
-				// movement. Ignore them.
-				return;
-			}
-
 			const a = event.touches.item(0);
 			const b = event.touches.item(1);
-			history.push({
-				timestamp: window.performance.now(),
-				center: [(a.screenX + b.screenX) / 2, (a.screenY + b.screenY) / 2],
-			});
+
+			const timestamp = window.performance.now();
+			const center = [(a.screenX + b.screenX) / 2, (a.screenY + b.screenY) / 2];
+
+			if (history.length > 0) {
+				const last = history[history.length - 1];
+				const centersAreEqual =
+					last.center[0] === center[0] && last.center[1] === center[1];
+
+				if (last.timestamp === timestamp || centersAreEqual) {
+					// Touches with the same timestamps or center don't help us
+					// see the speed of movement. Ignore them.
+					return;
+				}
+			}
+
+			history.push({timestamp, center});
 		},
 		{passive: true}
 	);
@@ -59,41 +64,29 @@ function listenForTwoFingerSwipes(onTwoFingerSwipe) {
 	);
 }
 
-// Returns the cardinal direction ("n", "e", "s", or "w") of the swipe or null
-// if there is no swipe.
+// Returns the cardinal direction of the swipe or null if there is no swipe.
 function getSwipe(hist) {
-	if (hist.length < 4 || hist[hist.length - 1].timestamp - hist[0].timestamp > 1000) {
+	// Speed is in pixels/millisecond. Must be maintained throughout swipe.
+	const MIN_SWIPE_SPEED = 0.2;
+
+	if (hist.length < 2) {
 		return null;
 	}
-
-	const directionCounts = {n: 0, e: 0, s: 0, w: 0};
 
 	for (let i = 1; i < hist.length; ++i) {
 		const previous = hist[i - 1];
 		const current = hist[i];
 
-		// Speed is in pixels/millisecond
 		const speed =
 			distance(previous.center, current.center) /
 			Math.abs(previous.timestamp - current.timestamp);
 
-		if (speed > 0 && speed < 0.2) {
+		if (speed < MIN_SWIPE_SPEED) {
 			return null;
 		}
-
-		const direction = getCardinalDirection(previous.center, current.center);
-		++directionCounts[direction];
 	}
 
-	let max = null;
-
-	for (const [direction, count] of Object.entries(directionCounts)) {
-		if (max === null || count > max[1]) {
-			max = [direction, count];
-		}
-	}
-
-	return max[0];
+	return getCardinalDirection(hist[0].center, hist[hist.length - 1].center);
 }
 
 function distance([x1, y1], [x2, y2]) {
