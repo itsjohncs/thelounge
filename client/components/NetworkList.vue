@@ -250,7 +250,7 @@ export default {
 	},
 	created() {
 		// Number of milliseconds a touch has to last to be considered long
-		this.LONG_TOUCH_DURATION = 350;
+		this.LONG_TOUCH_DURATION = 500;
 	},
 	mounted() {
 		Mousetrap.bind("alt+shift+right", this.expandNetwork);
