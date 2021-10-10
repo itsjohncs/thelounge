@@ -81,8 +81,6 @@
 				class="network"
 				role="region"
 				aria-live="polite"
-				@touchstart="onDraggableTouchStart"
-				@touchend="onDraggableTouchEnd"
 			>
 				<NetworkLobby
 					:network="network"
@@ -114,11 +112,7 @@
 					@choose="onDraggableChoose"
 					@unchoose="onDraggableUnchoose"
 				>
-					<template
-						v-for="(channel, index) in network.channels"
-						@touchstart="onDraggableTouchStart"
-						@touchend="onDraggableTouchEnd"
-					>
+					<template v-for="(channel, index) in network.channels">
 						<Channel
 							v-if="index > 0"
 							:key="channel.id"
@@ -337,27 +331,6 @@ export default {
 		},
 		onDraggableUnchoose(event) {
 			event.item.classList.remove("ui-sortable-dragging-touch-cue");
-		},
-		onDraggableTouchStart(event) {
-			// This disables the long touch default handlers
-			event.preventDefault();
-
-			if (event.touches.length === 1) {
-				this.touchStart = performance.now();
-			} else {
-				this.touchStart = null;
-			}
-		},
-		onDraggableTouchEnd(event) {
-			if (
-				event.touches.length === 0 &&
-				this.touchStart &&
-				performance.now() < this.touchStart + this.LONG_TOUCH_DURATION
-			) {
-				// Our preventDefault() in TouchStart disabled the automatic
-				// touch-to-click conversion, so we have to do it ourselves.
-				event.target.click();
-			}
 		},
 		toggleSearch(event) {
 			if (isIgnoredKeybind(event)) {
