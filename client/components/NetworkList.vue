@@ -82,6 +82,8 @@
 				role="region"
 				aria-live="polite"
 				@touchstart="onDraggableTouchStart"
+				@touchend="onDraggableTouchEnd"
+				@touchcancel="onDraggableTouchEnd"
 			>
 				<NetworkLobby
 					:network="network"
@@ -334,24 +336,15 @@ export default {
 			event.item.classList.remove("ui-sortable-dragging-touch-cue");
 		},
 		onDraggableTouchStart() {
-			if (document.body.classList.contains("force-no-select")) {
-				return;
+			if (event.touches.length === 1) {
+				// This prevents an iOS long touch default behavior: selecting
+				// the nearest selectable text.
+				document.body.classList.add("force-no-select");
 			}
-
-			// This prevents an iOS long touch default behavior: selecting the
-			// nearest selectable text.
-			document.body.classList.add("force-no-select");
-
-			document.body.addEventListener("touchend", cleanup);
-			document.body.addEventListener("touchcancel", cleanup);
-
-			// A touch end/cancel could be suppressed with stopPropagation so
-			// we'll make sure we cleanup in that unlikely case too.
-			const timeout = setTimeout(cleanup, 1000);
-
-			function cleanup() {
+		},
+		onDraggableTouchEnd(event) {
+			if (event.touches.length === 0) {
 				document.body.classList.remove("force-no-select");
-				clearTimeout(timeout);
 			}
 		},
 		toggleSearch(event) {
