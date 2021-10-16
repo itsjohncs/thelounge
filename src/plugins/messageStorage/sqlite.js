@@ -87,7 +87,7 @@ class MessageStorage {
 				})();
 			}
 		} catch (error) {
-			log.error(`Failed to initialize sqltie database: ${error}`);
+			log.error(`Failed to initialize sqlite database: ${error}`);
 			return false;
 		}
 
@@ -168,20 +168,16 @@ class MessageStorage {
 		// If unlimited history is specified, load 100k messages
 		const limit = Helper.config.maxHistory < 0 ? 100000 : Helper.config.maxHistory;
 
-		return new Promise((resolve, reject) => {
+		return new Promise((resolve) => {
 			const selectStmt = this.database.prepare(
 				"SELECT * FROM messages WHERE network = ? AND channel = ? ORDER BY time ASC LIMIT ?"
 			);
 
-			try {
-				return resolve(
-					selectStmt
-						.all(network.uuid, channel.name.toLowerCase(), limit)
-						.map(this._messageParser(true))
-				);
-			} catch (error) {
-				return reject(error);
-			}
+			resolve(
+				selectStmt
+					.all(network.uuid, channel.name.toLowerCase(), limit)
+					.map(this._messageParser(true))
+			);
 		});
 	}
 
@@ -210,21 +206,17 @@ class MessageStorage {
 		query.offset = parseInt(query.offset, 10) || 0;
 		params.push(query.offset);
 
-		return new Promise((resolve, reject) => {
-			try {
-				resolve({
-					searchTerm: query.searchTerm,
-					target: query.channelName,
-					networkUuid: query.networkUuid,
-					offset: query.offset,
-					results: this.database
-						.prepare(select)
-						.all(params)
-						.map(this._messageParser(false, query.offset)),
-				});
-			} catch (error) {
-				return reject(error);
-			}
+		return new Promise((resolve) => {
+			resolve({
+				searchTerm: query.searchTerm,
+				target: query.channelName,
+				networkUuid: query.networkUuid,
+				offset: query.offset,
+				results: this.database
+					.prepare(select)
+					.all(params)
+					.map(this._messageParser(false, query.offset)),
+			});
 		});
 	}
 
