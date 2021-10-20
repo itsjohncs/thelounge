@@ -177,7 +177,7 @@ class MessageStorage {
 				selectStmt
 					.all(network.uuid, channel.name.toLowerCase(), limit)
 					.reverse()
-					.map(this._messageParser(true))
+					.map(this._createMessageParser(() => this.client.idMsg++))
 			);
 		});
 	}
@@ -208,6 +208,7 @@ class MessageStorage {
 		params.push(query.offset);
 
 		return new Promise((resolve) => {
+			let msgId = query.offset;
 			resolve({
 				searchTerm: query.searchTerm,
 				target: query.channelName,
@@ -217,24 +218,19 @@ class MessageStorage {
 					.prepare(select)
 					.all(params)
 					.reverse()
-					.map(this._messageParser(false, query.offset)),
+					.map(this._createMessageParser(() => msgId++)),
 			});
 		});
 	}
 
-	_messageParser(useClientId, start) {
+	_createMessageParser(getId) {
 		return (row) => {
 			const msg = JSON.parse(row.msg);
 			msg.time = row.time;
 			msg.type = row.type;
 			msg.networkUuid = row.network;
 			msg.channelName = row.channel;
-
-			if (useClientId) {
-				msg.id = this.client.idMsg++;
-			} else {
-				msg.id = start++;
-			}
+			msg.id = getId();
 
 			return new Msg(msg);
 		};
