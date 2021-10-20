@@ -37,10 +37,9 @@ describe("SQLite Message Storage", function () {
 		fs.rmdir(path.join(Helper.getHomePath(), "logs"), done);
 	});
 
-	it("should resolve an empty array when disabled", function (done) {
-		store.getMessages(null, null).then((messages) => {
+	it("should resolve an empty array when disabled", function () {
+		return store.getMessages(null, null).then((messages) => {
 			expect(messages).to.be.empty;
-			done();
 		});
 	});
 
@@ -53,7 +52,7 @@ describe("SQLite Message Storage", function () {
 		expect(store.isEnabled).to.be.true;
 	});
 
-	it("should create tables", function (done) {
+	it("should create tables", function () {
 		const rows = store.database
 			.prepare("SELECT name, tbl_name, sql FROM sqlite_master WHERE type = 'table'")
 			.all();
@@ -72,19 +71,16 @@ describe("SQLite Message Storage", function () {
 					"CREATE TABLE messages (network TEXT, channel TEXT, time INTEGER, type TEXT, msg TEXT)",
 			},
 		]);
-
-		done();
 	});
 
-	it("should insert schema version to options table", function (done) {
+	it("should insert schema version to options table", function () {
 		const row = store.database
 			.prepare("SELECT value FROM options WHERE name = 'schema_version'")
 			.get();
 		expect(row.value).to.equal("1520239200");
-		done();
 	});
 
-	it("should store a message", function (done) {
+	it("should store a message", function () {
 		store.index(
 			{uuid: "this-is-a-network-guid"},
 			{name: "#thisISaCHANNEL"},
@@ -93,12 +89,10 @@ describe("SQLite Message Storage", function () {
 				text: "Hello from sqlite world!",
 			})
 		);
-
-		done();
 	});
 
-	it("should retrieve previously stored message", function (done) {
-		store
+	it("should retrieve previously stored message", function () {
+		return store
 			.getMessages({uuid: "this-is-a-network-guid"}, {name: "#thisisaCHANNEL"})
 			.then((messages) => {
 				expect(messages).to.have.lengthOf(1);
@@ -108,8 +102,6 @@ describe("SQLite Message Storage", function () {
 				expect(msg.text).to.equal("Hello from sqlite world!");
 				expect(msg.type).to.equal(Msg.Type.MESSAGE);
 				expect(msg.time.getTime()).to.equal(123456789);
-
-				done();
 			});
 	});
 
