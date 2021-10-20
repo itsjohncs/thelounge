@@ -105,6 +105,61 @@ describe("SQLite Message Storage", function () {
 			});
 	});
 
+	it("should retrieve latest LIMIT messages in order", function () {
+		const originalMaxHistory = Helper.config.maxHistory;
+
+		try {
+			Helper.config.maxHistory = 2;
+
+			for (let i = 0; i < 200; ++i) {
+				store.index(
+					{uuid: "retrieval-order-test-network"},
+					{name: "#channel"},
+					new Msg({
+						time: 123456789 + i,
+						text: `msg ${i}`,
+					})
+				);
+			}
+
+			return store
+				.getMessages({uuid: "retrieval-order-test-network"}, {name: "#channel"})
+				.then((messages) => {
+					expect(messages).to.have.lengthOf(2);
+					expect(messages.map((i) => i.text)).to.deep.equal(["msg 198", "msg 199"]);
+				});
+		} finally {
+			Helper.config.maxHistory = originalMaxHistory;
+		}
+	});
+
+	it("should search messages", function () {
+		const originalMaxHistory = Helper.config.maxHistory;
+
+		try {
+			Helper.config.maxHistory = 2;
+
+			return store
+				.search({
+					searchTerm: "msg",
+					networkUuid: "retrieval-order-test-network",
+				})
+				.then((messages) => {
+					expect(messages.results).to.have.lengthOf(100);
+
+					const expectedMessages = [];
+
+					for (let i = 100; i < 200; ++i) {
+						expectedMessages.push(`msg ${i}`);
+					}
+
+					expect(messages.results.map((i) => i.text)).to.deep.equal(expectedMessages);
+				});
+		} finally {
+			Helper.config.maxHistory = originalMaxHistory;
+		}
+	});
+
 	it("should close database", function (done) {
 		store.close((err) => {
 			expect(err).to.be.undefined;

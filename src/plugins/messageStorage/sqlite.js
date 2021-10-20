@@ -170,12 +170,13 @@ class MessageStorage {
 
 		return new Promise((resolve) => {
 			const selectStmt = this.database.prepare(
-				"SELECT * FROM messages WHERE network = ? AND channel = ? ORDER BY time ASC LIMIT ?"
+				"SELECT * FROM messages WHERE network = ? AND channel = ? ORDER BY time DESC LIMIT ?"
 			);
 
 			resolve(
 				selectStmt
 					.all(network.uuid, channel.name.toLowerCase(), limit)
+					.reverse()
 					.map(this._messageParser(true))
 			);
 		});
@@ -200,7 +201,7 @@ class MessageStorage {
 			params.push(query.channelName.toLowerCase());
 		}
 
-		select += " ORDER BY time ASC LIMIT ? OFFSET ? ";
+		select += " ORDER BY time DESC LIMIT ? OFFSET ? ";
 		params.push(100);
 
 		query.offset = parseInt(query.offset, 10) || 0;
@@ -215,6 +216,7 @@ class MessageStorage {
 				results: this.database
 					.prepare(select)
 					.all(params)
+					.reverse()
 					.map(this._messageParser(false, query.offset)),
 			});
 		});
