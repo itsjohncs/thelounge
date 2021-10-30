@@ -2,7 +2,7 @@
 	<div
 		v-if="isOpen"
 		id="context-menu-container"
-		:class="[passthrough && 'passthrough']"
+		:class="{passthrough}"
 		@click="containerClick"
 		@contextmenu.prevent="containerClick"
 		@keydown.exact.up.prevent="navigateMenu(-1)"
